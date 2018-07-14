@@ -1,5 +1,4 @@
 #include "StringPooler.h"
-
 CStringPooler::PooledString::PooledString(const char* str, int refCount /*=0*/, PooledString* next /*= nullptr*/)
 	: m_string(str)
 	, m_refCount(refCount)
@@ -28,14 +27,39 @@ std::string* CStringPooler::GetString(const char * str)
 
 CStringPooler::PooledString* CStringPooler::FindPooledString(const char *str)
 {
-	std::string pooledString(str);
+	std::string requestedString(str);
+	PooledString* pooledString = nullptr;
+	ForEach([&requestedString, &pooledString](PooledString* current){
+		if(current->m_string == requestedString)
+		{
+			pooledString = current;
+			return true;
+		}
+		return false;
+	});
+	return pooledString;
+}
+
+int CStringPooler::GetPoolCount()
+{
+	int count = 0;
+	ForEach([&count](PooledString* string){
+		count++;
+		return false;
+	});
+	return count;
+}
+
+void CStringPooler::ForEach(std::function<bool(CStringPooler::PooledString*)> f)
+{
 	PooledString* current = head;
 	while(current)
 	{
-		if(current->m_string == pooledString)
+		bool done = f(current);
+		if(done)
 		{
 			break;
 		}
+		current = current->m_next;
 	}
-	return current;
 }
