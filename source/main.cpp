@@ -3,5 +3,7 @@
 
 int main()
 {
-	std::cout<<"hello\n";
+	CString s{"Hello"};
+	CString s2{"Hello"};
+
 }
