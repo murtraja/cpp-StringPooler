@@ -2,6 +2,7 @@
 #include <string>
 #include <functional>
 #include <iostream>
+#include <set>
 #include "tracer.h"
 
 class CStringPooler
@@ -11,18 +12,24 @@ class CStringPooler
 	public:
 		std::string m_string;
 		int m_refCount;
-		PooledString* m_next;
-		PooledString(const char* str, int refCount = 0, PooledString* next = nullptr);
+		PooledString(const char* str, int refCount = 0);
+
+		
 	};
-	static PooledString* head;
 
+	static std::set<PooledString> m_pooledStrings;
 
-	static void ForEach(std::function<bool(CStringPooler::PooledString*)> f);
 	static PooledString* FindPooledString(const char *str);
 
 public:
-	static std::string* GetString(const char * str);
+	static const std::string* GetString(const char * str);
 
 	// for testing purposes
 	static int GetPoolCount();	
+
+	friend bool operator<(const PooledString& lhs, const PooledString& rhs);
+	friend bool operator==(const PooledString& lhs, const PooledString& rhs);
 };
+
+bool operator<(const CStringPooler::PooledString& lhs, const CStringPooler::PooledString& rhs);
+bool operator==(const CStringPooler::PooledString& lhs, const CStringPooler::PooledString& rhs);

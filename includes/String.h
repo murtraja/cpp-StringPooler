@@ -5,7 +5,7 @@
 
 class CString
 {
-	std::string *m_string{nullptr};
+	const std::string *m_string{nullptr};
 public:
 	CString(const char *str);
 };

@@ -1,65 +1,49 @@
 #include "StringPooler.h"
-CStringPooler::PooledString::PooledString(const char* str, int refCount /*=0*/, PooledString* next /*= nullptr*/)
+
+std::set<CStringPooler::PooledString> CStringPooler::m_pooledStrings;
+
+CStringPooler::PooledString::PooledString(const char* str, int refCount /*=0*/)
 	: m_string(str)
 	, m_refCount(refCount)
-	, m_next(next)
 {
 
 }
 
-CStringPooler::PooledString* CStringPooler::head = nullptr;
-
-std::string* CStringPooler::GetString(const char * str)
+const std::string* CStringPooler::GetString(const char * str)
 {
-	PooledString* existing = FindPooledString(str);
+	auto setInsertedResult = m_pooledStrings.insert(PooledString(str));
+	auto it = setInsertedResult.first;
+	auto existing = !(setInsertedResult.second);
 	if(existing)
 	{
-		existing->m_refCount++;
-		return &existing->m_string;
+		const_cast<PooledString*>(&(*it))->m_refCount++;
 	}
-
-	// create a new pooled string here
-	PooledString* newPooledString = new PooledString(str);
-	newPooledString->m_next = head;
-	head = newPooledString;
-	return &newPooledString->m_string;
+	return &((*it).m_string);
 }
 
 CStringPooler::PooledString* CStringPooler::FindPooledString(const char *str)
 {
-	std::string requestedString(str);
-	PooledString* pooledString = nullptr;
-	ForEach([&requestedString, &pooledString](PooledString* current){
-		if(current->m_string == requestedString)
-		{
-			pooledString = current;
-			return true;
-		}
-		return false;
-	});
-	return pooledString;
+	auto setFindResult = m_pooledStrings.find(PooledString{str});
+	if(setFindResult != m_pooledStrings.end())
+	{
+		// found
+	}
+	return nullptr;
 }
 
 int CStringPooler::GetPoolCount()
 {
 	int count = 0;
-	ForEach([&count](PooledString* string){
-		count++;
-		return false;
-	});
+	count = m_pooledStrings.size();
 	return count;
 }
 
-void CStringPooler::ForEach(std::function<bool(CStringPooler::PooledString*)> f)
+bool operator<(const CStringPooler::PooledString& lhs, const CStringPooler::PooledString& rhs)
 {
-	PooledString* current = head;
-	while(current)
-	{
-		bool done = f(current);
-		if(done)
-		{
-			break;
-		}
-		current = current->m_next;
-	}
+	return lhs.m_string < rhs.m_string;
+}
+
+bool operator==(const CStringPooler::PooledString& lhs, const CStringPooler::PooledString& rhs)
+{
+	return lhs.m_string == rhs.m_string;
 }
